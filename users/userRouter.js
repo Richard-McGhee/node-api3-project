@@ -1,47 +1,146 @@
 const express = require('express');
+const users = require('./userDb')
+const posts = require('../posts/postDb')
 
 const router = express.Router();
 
-router.post('/', (req, res) => {
-  // do your magic!
+router.post('/', validateUser, (req, res) => {
+  users.insert(req.body)
+  .then(user => {
+    res.status(201).json({ data: user })
+  })
+  .catch(err => {
+    res.status(500).json({ error: err, errorMessage: "An error occured creating the user" })
+  })
 });
 
-router.post('/:id/posts', (req, res) => {
-  // do your magic!
+router.post('/:id/posts', validateUserId, validatePost, (req, res) => {
+ posts.insert(req.body)
+  .then(newPost => {
+    res.status(201).json({ data: newPost })
+  })
+  .catch(err => {
+    res.status(500).json({ error: err, errorMessage: "An error occured creating the post" })
+  })
 });
 
 router.get('/', (req, res) => {
-  // do your magic!
+  users.get()
+  .then(user => {
+    res.status(200).json({ data: user})
+  })
+  .catch(err => {
+    res.status(500).json({ error: err, errorMessage: "An error occured retrieving the users" })
+  })
 });
 
-router.get('/:id', (req, res) => {
-  // do your magic!
+router.get('/:id', validateUserId, (req, res) => {
+  const id = Number(req.params.id)
+
+  users.getById(id)
+  .then(user => {
+    res.status(200).json({ data: user })
+  })
+  .catch(err => {
+    res.status(500).json({ error: err, errorMessage: "An error occured retrieving the user" })
+  })
 });
 
-router.get('/:id/posts', (req, res) => {
-  // do your magic!
+router.get('/:id/posts', validateUserId, (req, res) => {
+  const id = Number(req.params.id)
+
+  users.getUserPosts(id)
+  .then(post => {
+    res.status(200).json({ data: post })
+  })
+  .catch(err => {
+    res.status(500).json({ error: err, errorMessage: "An error occured retrieving the post" })
+  })
 });
 
-router.delete('/:id', (req, res) => {
-  // do your magic!
+router.delete('/:id', validateUserId, (req, res) => {
+  const id = Number(req.params.id)
+
+  users.remove(id)
+  .then(userNum => {
+    res.status(200).json({ data: `Removed ${userNum} post(s)` })
+  })
+  .catch(err => {
+    res.status(500).json({ error: err, errorMessage: "An error occured deleting the user" })
+  })
 });
 
-router.put('/:id', (req, res) => {
-  // do your magic!
+router.put('/:id',validateUser, validateUserId, (req, res) => {
+  const id = Number(req.params.id)
+
+  users.update(id, req.body)
+  .then(user => {
+    users.getById(id)
+    .then(newUser => {
+      res.status(200).json({ data: newUser })
+    })
+    .catch(err => {
+      res.status(500).json({ error: err, errorMessage: "An error occured updating the user" })
+    })
+  })
+  .catch(err => {
+    res.status(500).json({ error: err, errorMessage: "An error occured updating the user" })
+  })
 });
 
 //custom middleware
 
 function validateUserId(req, res, next) {
-  // do your magic!
+  const id = Number(req.params.id)
+
+  users.getById(id)
+  .then(user => {
+    if(user){
+      req.user = user
+      next()
+    } else{
+      res.status(400).json({ message: "invalid user id" })
+    }
+  })
+  .catch(err => {
+    res.status(500).json({ error: err, errorMessage: errMessage })
+  })
 }
 
 function validateUser(req, res, next) {
-  // do your magic!
+  const { name } = req.body
+
+    if(!req.body){
+      res.status(400).json({ message: "missing user data" })
+    } else if(!name){
+      res.status(400).json({ message: "missing required name field" })
+    } else if(req.body && name){
+      next()
+    } else{
+      res.status(500).json({ error: err, errorMessage: errMessage })
+    }
 }
 
 function validatePost(req, res, next) {
-  // do your magic!
+  const postid = Number(req.params.id)
+  const { text, user_id } = req.body
+  const usableID = Number(user_id)
+
+  if(!req.body){
+    res.status(400).json({ message: "missing post data" })
+  } else if(!text){
+    res.status(400).json({ message: "missing required text field" })
+  } else if(!user_id){
+    res.status(400).json({ message: "missing required userId field"})
+  } else if(postid !== usableID){
+    res.status(400).json({ message: "post id must match user id"})
+  } else if(req.body && text && user_id && usableID === postid){
+    next()
+  } else{
+    res.status(500).json({ errorMessage: errMessage })
+  }
 }
+
+const errMessage = "A validation error has occured"
 
 module.exports = router;
