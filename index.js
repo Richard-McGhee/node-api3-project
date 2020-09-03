@@ -1,12 +1,14 @@
 const express = require('express')
+const helmet = require('helmet')
 const userRouter = require('./users/userRouter')
 const postRouter = require('./posts/postRouter')
 const server = express()
 
 server.use(express.json())
+server.use(helmet())
 server.use(logger)
-server.use("/api/user", userRouter)
-server.use("/api/post", postRouter)
+server.use("/api/users", userRouter)
+server.use("/api/posts", postRouter)
 
 server.get("/", (req, res) => {
     if(req){
@@ -19,7 +21,7 @@ server.get("/", (req, res) => {
 // Custom Middleware
 
 function logger(req, res, next){
-    console.log(`[${new Date().toISOString()}] ${req.method} to ${req.url} from ${req.get("Origin")}`)
+    console.log(`[${new Date().toISOString()}] ${req.method} to ${req.url} from ${req.get("origin")}`)
     next()
 }
 

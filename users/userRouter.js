@@ -1,6 +1,6 @@
 const express = require('express');
-const users = require('./users/userDb')
-const posts = require('./posts/postDb')
+const users = require('./userDb')
+const posts = require('../posts/postDb')
 
 const router = express.Router();
 
@@ -15,13 +15,29 @@ router.post('/', validateUser, (req, res) => {
 });
 
 router.post('/:id/posts', validateUserId, validatePost, (req, res) => {
-  posts.insert(req.body)
-  .then(post => {
-    res.status(201).json({ data: post })
+  const id = Number(req.params.id)
+
+  users.getUserPosts(id)
+  .then(userPosts => {
+    posts.insert(req.body)
+    .then(newPost => {
+      res.status(201).json({ data: newPost })
+    })
+    .catch(err => {
+      res.status(500).json({ error: err, errorMessage: "An error occured creating the post" })
+    })
   })
   .catch(err => {
-    res.status(500).json({ error: err, errorMessage: "An error occured creating the post" })
+    res.status(500).json({ error: err, errorMessage: "A different error occured" })
   })
+
+  // posts.insert(req.body)
+  // .then(newPost => {
+  //   res.status(201).json({ data: newPost })
+  // })
+  // .catch(err => {
+  //   res.status(500).json({ error: err, errorMessage: "An error occured creating the post" })
+  // })
 });
 
 router.get('/', (req, res) => {
@@ -49,21 +65,21 @@ router.get('/:id', validateUserId, (req, res) => {
 router.get('/:id/posts', validateUserId, (req, res) => {
   const id = Number(req.params.id)
 
-  posts.getById(id)
+  users.getUserPosts(id)
   .then(post => {
-    res.status(200).json({ data: post})
+    res.status(200).json({ data: post })
   })
   .catch(err => {
     res.status(500).json({ error: err, errorMessage: "An error occured retrieving the post" })
   })
 });
 
-router.delete('/:id', validateUser, validateUserId, (req, res) => {
+router.delete('/:id', validateUserId, (req, res) => {
   const id = Number(req.params.id)
 
   users.remove(id)
   .then(userNum => {
-    res.status(204).json({ data: `Removed ${userNum} post(s)` })
+    res.status(200).json({ data: `Removed ${userNum} post(s)` })
   })
   .catch(err => {
     res.status(500).json({ error: err, errorMessage: "An error occured deleting the user" })

@@ -1,5 +1,5 @@
 const express = require('express');
-const posts = require('./posts/postDb')
+const posts = require('./postDb')
 
 const router = express.Router();
 
@@ -30,7 +30,7 @@ router.delete('/:id', validatePostId, (req, res) => {
 
   posts.remove(id)
   .then(postNum => {
-    res.status(204).json({ data: `Removed ${postNum} post(s)` })
+    res.status(200).json({ data: `Removed ${postNum} post(s)` })
   })
 });
 
