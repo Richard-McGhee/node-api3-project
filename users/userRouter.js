@@ -17,27 +17,13 @@ router.post('/', validateUser, (req, res) => {
 router.post('/:id/posts', validateUserId, validatePost, (req, res) => {
   const id = Number(req.params.id)
 
-  users.getUserPosts(id)
-  .then(userPosts => {
-    posts.insert(req.body)
-    .then(newPost => {
-      res.status(201).json({ data: newPost })
-    })
-    .catch(err => {
-      res.status(500).json({ error: err, errorMessage: "An error occured creating the post" })
-    })
+  users.insert(req.body)
+  .then(newPost => {
+    res.status(201).json({ data: newPost })
   })
   .catch(err => {
-    res.status(500).json({ error: err, errorMessage: "A different error occured" })
+    res.status(500).json({ error: err, errorMessage: "An error occured creating the post" })
   })
-
-  // posts.insert(req.body)
-  // .then(newPost => {
-  //   res.status(201).json({ data: newPost })
-  // })
-  // .catch(err => {
-  //   res.status(500).json({ error: err, errorMessage: "An error occured creating the post" })
-  // })
 });
 
 router.get('/', (req, res) => {
@@ -138,16 +124,22 @@ function validateUser(req, res, next) {
 }
 
 function validatePost(req, res, next) {
-  const { text } = req.body
+  const postid = Number(req.params.id)
+  const { text, user_id } = req.body
+  const usableID = Number(user_id)
 
   if(!req.body){
     res.status(400).json({ message: "missing post data" })
   } else if(!text){
     res.status(400).json({ message: "missing required text field" })
-  } else if(req.body && text){
+  } else if(!user_id){
+    res.status(400).json({ message: "missing required userId field"})
+  } else if(postid !== usableID){
+    res.status(400).json({ message: "post id must match user id"})
+  } else if(req.body && text && user_id && usableID === postid){
     next()
   } else{
-    res.status(500).json({ error: err, errorMessage: errMessage })
+    res.status(500).json({ errorMessage: errMessage })
   }
 }
 
