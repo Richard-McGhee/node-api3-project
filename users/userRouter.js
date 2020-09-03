@@ -1,5 +1,6 @@
 const express = require('express');
 const users = require('./users/userDb')
+const posts = require('./posts/postDb')
 
 const router = express.Router();
 
@@ -9,38 +10,63 @@ router.post('/', validateUser, (req, res) => {
     res.status(201).json({ data: user })
   })
   .catch(err => {
+    res.status(500).json({ error: err, errorMessage: "An error occured creating the user" })
+  })
+});
+
+router.post('/:id/posts', validateUserId, validatePost, (req, res) => {
+  posts.insert(req.body)
+  .then(post => {
+    res.status(201).json({ data: post })
+  })
+  .catch(err => {
     res.status(500).json({ error: err, errorMessage: "An error occured creating the post" })
   })
 });
 
-router.post('/:id/posts', validatePost, (req, res) => {
-  // do your magic!
-});
-
 router.get('/', (req, res) => {
+  users.get()
+  .then(user => {
+    res.status(200).json({ data: user})
+  })
+  .catch(err => {
+    res.status(500).json({ error: err, errorMessage: "An error occured retrieving the users" })
+  })
+});
+
+router.get('/:id', validateUserId, (req, res) => {
   // do your magic!
 });
 
-router.get('/:id', (req, res) => {
+router.get('/:id/posts', validateUserId, (req, res) => {
   // do your magic!
 });
 
-router.get('/:id/posts', (req, res) => {
+router.delete('/:id', validateUserId, (req, res) => {
   // do your magic!
 });
 
-router.delete('/:id', (req, res) => {
-  // do your magic!
-});
-
-router.put('/:id', (req, res) => {
+router.put('/:id',validateUser, validateUserId, (req, res) => {
   // do your magic!
 });
 
 //custom middleware
 
 function validateUserId(req, res, next) {
-  // do your magic!
+  const id = Number(req.params.id)
+
+  users.getById(id)
+  .then(user => {
+    if(user){
+      req.user = user
+      next()
+    } else{
+      res.status(400).json({ message: "invalid user id" })
+    }
+  })
+  .catch(err => {
+    res.status(500).json({ error: err, errorMessage: errMessage })
+  })
 }
 
 function validateUser(req, res, next) {
@@ -53,7 +79,7 @@ function validateUser(req, res, next) {
     } else if(req.body && name){
       next()
     } else{
-      res.status(500).json({ error: err, errorMessage: "A validation error has occured" })
+      res.status(500).json({ error: err, errorMessage: errMessage })
     }
 }
 
@@ -67,8 +93,10 @@ function validatePost(req, res, next) {
   } else if(req.body && text){
     next()
   } else{
-    res.status(500).json({ error: err, errorMessage: "A validation error has occured" })
+    res.status(500).json({ error: err, errorMessage: errMessage })
   }
 }
+
+const errMessage = "A validation error has occured"
 
 module.exports = router;
