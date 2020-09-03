@@ -35,19 +35,57 @@ router.get('/', (req, res) => {
 });
 
 router.get('/:id', validateUserId, (req, res) => {
-  // do your magic!
+  const id = Number(req.params.id)
+
+  users.getById(id)
+  .then(user => {
+    res.status(200).json({ data: user })
+  })
+  .catch(err => {
+    res.status(500).json({ error: err, errorMessage: "An error occured retrieving the user" })
+  })
 });
 
 router.get('/:id/posts', validateUserId, (req, res) => {
-  // do your magic!
+  const id = Number(req.params.id)
+
+  posts.getById(id)
+  .then(post => {
+    res.status(200).json({ data: post})
+  })
+  .catch(err => {
+    res.status(500).json({ error: err, errorMessage: "An error occured retrieving the post" })
+  })
 });
 
-router.delete('/:id', validateUserId, (req, res) => {
-  // do your magic!
+router.delete('/:id', validateUser, validateUserId, (req, res) => {
+  const id = Number(req.params.id)
+
+  users.remove(id)
+  .then(userNum => {
+    res.status(204).json({ data: `Removed ${userNum} post(s)` })
+  })
+  .catch(err => {
+    res.status(500).json({ error: err, errorMessage: "An error occured deleting the user" })
+  })
 });
 
 router.put('/:id',validateUser, validateUserId, (req, res) => {
-  // do your magic!
+  const id = Number(req.params.id)
+
+  users.update(id, req.body)
+  .then(user => {
+    users.getById(id)
+    .then(newUser => {
+      res.status(200).json({ data: newUser })
+    })
+    .catch(err => {
+      res.status(500).json({ error: err, errorMessage: "An error occured updating the user" })
+    })
+  })
+  .catch(err => {
+    res.status(500).json({ error: err, errorMessage: "An error occured updating the user" })
+  })
 });
 
 //custom middleware
